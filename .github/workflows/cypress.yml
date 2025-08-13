@@ -1,50 +1,47 @@
-name: cypress-e2e
-
+name: Run Cypress Tests
+ 
 on:
   push:
+    branches: [main]
   pull_request:
-
+    branches: [main]
+ 
 jobs:
-  test:
+  cypress-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+ 
     steps:
-      - name: Checkout
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node
+ 
+      - name: 🔧 Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install
+          node-version: 18
+ 
+      - name: 📦 Install dependencies
         run: npm ci
-
-      - name: Build (if needed)
-        run: npm run build --if-present
-
-      - name: Run Cypress (starts app & waits on URL)
-        uses: cypress-io/github-action@v6
-        with:
-          start: npm start                  # your start script
-          wait-on: 'http://localhost:3000' # match your baseUrl/port
-          browser: chrome
-          # command: npm run e2e            # alternative if using start-server-and-test
-
-      # OPTIONAL: Merge reports into a single HTML (see step 4)
-      # - name: Merge reports
-      #   if: always()
-      #   run: |
-      #     npm run report:merge
-      #     npm run report:html
-
-      - name: Upload Mochawesome reports
-        if: always() # upload even if tests fail
+ 
+      - name: 🧪 Run Cypress tests
+        run: npx cypress run
+ 
+      - name: 📤 Upload screenshots on failure
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: mochawesome-reports
-          path: reports
-          if-no-files-found: warn
-          retention-days: 7
+          name: cypress-screenshots
+          path: cypress/screenshots
+ 
+      - name: 📤 Upload videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+ 
+      - name: 📤 Upload Mochawesome HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+           name: mochawesome-report
+           path: cypress/reports
