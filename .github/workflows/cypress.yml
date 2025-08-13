@@ -1,0 +1,50 @@
+name: cypress-e2e
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (if needed)
+        run: npm run build --if-present
+
+      - name: Run Cypress (starts app & waits on URL)
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start                  # your start script
+          wait-on: 'http://localhost:3000' # match your baseUrl/port
+          browser: chrome
+          # command: npm run e2e            # alternative if using start-server-and-test
+
+      # OPTIONAL: Merge reports into a single HTML (see step 4)
+      # - name: Merge reports
+      #   if: always()
+      #   run: |
+      #     npm run report:merge
+      #     npm run report:html
+
+      - name: Upload Mochawesome reports
+        if: always() # upload even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-reports
+          path: reports
+          if-no-files-found: warn
+          retention-days: 7
